@@ -42,7 +42,11 @@ function ExpressRouter() {
                         //     resolve(match[1]);
                         // });
                         // p.then(function onFulfilled(data) {
-                            req.params[routes.get[paths[index]].params[0]] = match[1];
+                        
+                            //Loop through the path and grab all the values
+                            for (let i = 1; i <= match.length; i++) {
+                                req.params[routes.get[paths[index]].params[i-1]] = match[i];
+                            }
                             routes.get[paths[index]].callback(req, res);
                     //     }).catch(function rejected(err) {
                     //         throw err;
@@ -55,6 +59,9 @@ function ExpressRouter() {
                     res.end("Not found");
                 }
             } else if (method === 'post') {
+                
+                //parse the url for the query params
+                //parse for the path until the question mark
 
                 let paths = Object.keys(routes.post);
                 let found = false;
@@ -96,6 +103,9 @@ function ExpressRouter() {
                     }
                 });
                 p.then(function onFulfilled(data) {
+                    
+
+                        processQueryParams(req, req.body);
                         routes.post[paths[data]].callback(req, res); 
                     }, function onReject(err) {
                         res.statusCode = err;
@@ -122,6 +132,7 @@ function ExpressRouter() {
         var array = [];
         var paramsArray = [];
         var segments = path.split('/');
+        console.log("segments is ", segments);
         segments.forEach((segment) => {
           if (segment[0] === ':') {
             array.push('([^\\/]+)');
@@ -131,8 +142,12 @@ function ExpressRouter() {
           }
         });
         
-        var pattern = array.join('/');
+        var pattern = array.join('\\/');
         //=> /path/([^\\/]+)/something/([^\\/]+)
+        console.log("value of the pattern added to routes", pattern);
+        
+        
+        
         routes.get[pattern] = {};
         routes.get[pattern].callback = callback;
         routes.get[pattern].params = paramsArray;
@@ -148,19 +163,10 @@ function ExpressRouter() {
         //
         //var path = '/path/:to/something/:else';
 
-        var array = [];
-        var paramsArray = [];
-        var segments = path.split('/');
-        segments.forEach((segment) => {
-          if (segment[0] === ':') {
-            array.push('([^\\/]+)');
-            paramsArray.push(segment.slice(1));
-          } else {
-            array.push(segment);
-          }
-        });
+        let pathPattern = pathSegmenter(path);
         
-        var pattern = array.join('/');
+        let pattern = pathPattern.pathPattern;
+        let paramsArray = pathPattern.paramsArray;
         //=> /path/([^\\/]+)/something/([^\\/]+)
         routes.post[pattern] = {};
         routes.post[pattern].callback = callback;
@@ -176,12 +182,41 @@ function ExpressRouter() {
 }
 
 
-
-
-
-
-
-
-
-
 module.exports = ExpressRouter;
+
+
+function pathSegmenter(path) {
+    let array = [];
+    let paramsArray = [];
+    let segments = path.split('/');
+    segments.forEach((segment) => {
+      if (segment[0] === ':') {
+        array.push('([^\\/]+)');
+        paramsArray.push(segment.slice(1));
+      } else {
+        array.push(segment);
+      }
+    });
+    
+    return { 'pathPattern': array.join('/'), 'params': paramsArray };
+}
+
+function processQueryParams(obj, body) {
+    //process data on req.body which is a string of key=value pairs joined by &s
+    //split string at &
+    //then split string at =
+    //then add each pair as key and value on req.body
+    
+    //reset value of obj.body
+    let bodyData = body;
+    
+    obj.body = {};
+    
+    
+    let data = bodyData.split("&");
+    //now we have an array of key=value
+    data.forEach(function (element, index, arr) {
+        let pair = element.split("=");
+        obj.body[pair[0]] = pair[1];
+    });
+}
