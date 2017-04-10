@@ -10,27 +10,26 @@ var app = express();
 // 3. Create routes via the app object
 
 app.get('/:foo/:bar', (req, res) => {
-  res.end(`Hi world! Hi world!! \n Here's the path:${ req.params.foo } and ${ req.params.bar }`);
+    res.end(`Hi world! Hi world!! \n Here's the path:${ req.params.foo } and ${ req.params.bar }`);
 });
 
 app.get('/:foo', (req, res) => {
-  res.end(`Hi world! Hi world!! \n Here's the path:${ req.params.foo }`);
+    res.end(`Hi world! Hi world!! \n Here's the path:${ req.params.foo }`);
 });
 
 
 
 
 app.get('/', (req, res) => {
-  res.writeHead(200, "you got it!", {
-      "Content-Type": "text/html"
-    }
-  );
-  res.write('<form action="/" method="post"><input type="text" name="baby" id="baby"><button type="submit">Submit</button></form>', 'utf8');
-  res.end();
+    res.writeHead(200, "you got it!", {
+        "Content-Type": "text/html"
+    });
+    res.write('<form action="/" method="post"><input type="text" name="baby" id="baby"><button type="submit">Submit</button></form>', 'utf8');
+    res.end();
 });
 
 app.post('/', (req, res) => {
-  res.end(`This is the POST and req.body is ${ req.body.baby }`);
+    res.end(`This is the POST and req.body is ${ req.body.baby }`);
 });
 
 
@@ -39,5 +38,5 @@ var port = process.env.PORT || 4000;
 var host = 'localhost';
 
 app.listen(port, () => {
-  console.log(`Listening at: http://${ host }:${ port }`);
+    console.log(`Listening at: http://${ host }:${ port }`);
 });
