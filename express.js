@@ -34,10 +34,8 @@ function ExpressRouter() {
                     //     resolve(match[1]);
                     // });
                     // p.then(function onFulfilled(data) {
-                    req.params = getRouteParameters(pathMatch, req.url, routes.get[pathMatch].params);
-
-
-                    routes.get[paths[index]].callback(req, res);
+                    req.params = getRouteParameters(routes.get[pathMatch].original, req.url);
+                    routes.get[pathMatch].callback(req, res);
                     //     }).catch(function rejected(err) {
                     //         throw err;
                     // });
@@ -130,6 +128,8 @@ function ExpressRouter() {
         routes.get[pathPattern] = {};
         routes.get[pathPattern].callback = callback;
         routes.get[pathPattern].params = routeParams;
+        routes.get[pathPattern].original = path;
+
     }
 
     function post(path, callback) { //maybe we should save the matched regex somewhere?
@@ -150,6 +150,8 @@ function ExpressRouter() {
         routes.post[pathPattern] = {};
         routes.post[pathPattern].callback = callback;
         routes.post[pathPattern].params = routeParams;
+        routes.post[pathPattern].original = path;
+
     }
 
     return {
@@ -166,12 +168,10 @@ module.exports = ExpressRouter;
 
 function pathSegmenter(path) {
     let array = [];
-    let paramsArray = [];
     let segments = path.split('/');
     segments.forEach((segment) => {
         if (segment[0] === ':') {
             array.push('([^\\/]+)');
-            paramsArray.push(segment.slice(1));
         }
         else {
             array.push(segment);
@@ -180,7 +180,6 @@ function pathSegmenter(path) {
 
     return {
         'pathPattern': array.join('\\/'),
-        'params': paramsArray
     };
 }
 
@@ -204,21 +203,19 @@ function getBodyData(obj, body) {
     });
 }
 
-function getRouteParameters(matchedUrl, reqUrl, parametersArr) {
+function getRouteParameters(originalUrl, reqUrl) {
     let routeParameters = {};
-    //Loop through the path and grab all the values
-    for (let i = 1; i <= match.length; i++) {
-        //if we found a match, go through the params property on the routes.get object at this index and assign if the value at the same places that we get the matcher regex
-        let routeObject = routes.get[paths[index]];
-        let routeParamsArray = routeObject.params;
-        console.log(`routeParamsArray ${ routeParamsArray }`);
-        console.log(`routeObject ${ routeObject }`);
-
-
-
-        req.params[routes.get[paths[index]].params[i - 1]] = match[i];
-    }
-    return routeParameteres;
+    //need to remove trailing and leading backslashes
+    originalUrl = originalUrl.split('/');
+    reqUrl = reqUrl.split('/');
+    originalUrl.forEach((segment, index) => {
+        //If the segment starts with :, grab the rest of it and it becomes the key
+        //The corresponding value at the same index of the req url is the value
+        if (segment[0] == ':') {
+            routeParameters[segment.slice(1)] = originalUrl[index];
+        }
+    });
+    return routeParameters;
 }
 
 
